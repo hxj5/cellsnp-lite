@@ -146,7 +146,7 @@ csp_plp_t* csp_plp_init(void) { return (csp_plp_t*) calloc(1, sizeof(csp_plp_t))
 void csp_plp_destroy(csp_plp_t *p) { 
     if (p) { 
         int i;
-        for (i = 0; i < 5; i++) { list_qu_destroy(p->qu[i]); }
+        for (i = 0; i < 5; i++) { kv_destroy(p->qu[i]); }
         if (p->hug) { map_ug_destroy(p->hug); }
         free(p); 
     }
@@ -166,7 +166,7 @@ void csp_plp_reset(csp_plp_t *p) {
 
 void csp_plp_print(FILE *fp, csp_plp_t *p, char *prefix) {
     int i, j;
-    map_ug_iter u;
+    khiter_t u;
     fprintf(fp, "%stotal read count = %ld\n", prefix, p->tc);
     fprintf(fp, "%sbase count (A/C/G/T/N):", prefix);
     for (i = 0; i < 5; i++) fprintf(fp, " %ld", p->bc[i]);
@@ -184,12 +184,12 @@ void csp_plp_print(FILE *fp, csp_plp_t *p, char *prefix) {
         fputc('\n', fp);
     }
     if (p->hug) {
-        int size = map_ug_size(p->hug);
+        int size = kh_size(p->hug);
         fprintf(fp, "%ssize of the map_ug = %d\n", prefix, size);
         if (size) {
             fprintf(fp, "%s", prefix);
-            for (u = map_ug_begin(p->hug); u != map_ug_end(p->hug); u++) {
-                if (map_ug_exist(p->hug, u)) { fprintf(fp, " %s", map_ug_key(p->hug, u)); }
+            for (u = kh_begin(p->hug); u != kh_end(p->hug); u++) {
+                if (kh_exist(p->hug, u)) { fprintf(fp, " %s", kh_key(p->hug, u)); }
             } fputc('\n', fp);
         }
     }
@@ -240,9 +240,9 @@ void csp_mplp_destroy(csp_mplp_t *p) {
     if (p) {
         if (p->hsg) { map_sg_destroy(p->hsg); }
         if (p->hsg_iter) { free(p->hsg_iter); }
-        if (p->pu) { pool_uu_destroy(p->pu); }
-        if (p->pl) { pool_ul_destroy(p->pl); }
-        if (p->su) { pool_ps_destroy(p->su); }
+        if (p->pu) { jmempool_destroy(umi_unit, p->pu); }
+        if (p->pl) { jmempool_destroy(list_umiunit, p->pl); }
+        if (p->su) { jmempool_destroy(str, p->su); }
         free(p); 
     }
 }
@@ -253,9 +253,9 @@ void csp_mplp_reset(csp_mplp_t *p) {
         p->tc = p->ad = p->dp = p->oth = 0;
         p->nr_ad = p->nr_dp = p->nr_oth = 0;
         if (p->hsg) { map_sg_reset_val(p->hsg); }
-        if (p->pu) { pool_uu_reset(p->pu); }
-        if (p->pl) { pool_ul_reset(p->pl); }
-        if (p->su) { pool_ps_reset(p->su); }
+        if (p->pu) { jmempool_reset(umi_unit, p->pu); }
+        if (p->pl) { jmempool_reset(list_umiunit, p->pl); }
+        if (p->su) { jmempool_reset(str, p->su); }
         memset(p->qvec, 0, sizeof(p->qvec));
     }
 }
@@ -274,8 +274,8 @@ void csp_mplp_print(FILE *fp, csp_mplp_t *p, char *prefix) {
     if (p->nsg) {
         kputs(prefix, s); kputc('\t', s);
         for (i = 0; i < p->nsg; i++) {
-            fprintf(fp, "%sSG-%d = %s:\n", prefix, i, map_sg_key(p->hsg, p->hsg_iter[i]));
-            plp = map_sg_val(p->hsg, p->hsg_iter[i]);
+            fprintf(fp, "%sSG-%d = %s:\n", prefix, i, kh_key(p->hsg, p->hsg_iter[i]));
+            plp = kh_val(p->hsg, p->hsg_iter[i]);
             csp_plp_print(fp, plp, ks_str(s));
         }
     }
@@ -301,13 +301,13 @@ void csp_mplp_print_(FILE *fp, csp_mplp_t *p, char *prefix) {
 int csp_mplp_set_sg(csp_mplp_t *p, char **s, const int n) {
     if (NULL == p || NULL == s || 0 == n) { return -1; }
     int i, r;
-    map_sg_iter k;
-    if (NULL == p->hsg && NULL == (p->hsg = map_sg_init())) { return -1; }
-    if (NULL == p->hsg_iter && NULL == (p->hsg_iter = (map_sg_iter*) malloc(sizeof(map_sg_iter) * n))) { return -1; }
+    khiter_t k;
+    if (NULL == p->hsg && NULL == (p->hsg = kh_init(sample_group))) { return -1; }
+    if (NULL == p->hsg_iter && NULL == (p->hsg_iter = (khiter_t*) malloc(sizeof(khiter_t) * n))) { return -1; }
     for (i = 0; i < n; i++) {
         if (s[i]) { 
-            k = map_sg_put(p->hsg, s[i], &r); 
-            if (r > 0) { map_sg_val(p->hsg, k) = NULL; }
+            k = kh_put(sample_group, p->hsg, s[i], &r); 
+            if (r > 0) { kh_val(p->hsg, k) = NULL; }
             else if (r < 0) { return -1; } 
             else { return -2; } /* r = 0 means repeatd sgnames. */
         } else { return -1; }
@@ -315,8 +315,8 @@ int csp_mplp_set_sg(csp_mplp_t *p, char **s, const int n) {
     /* Storing iter index for each sg (sample group) name must be done after all sg names have been pushed into 
        the HashMap in case that the internal arrays of HashMap autoly shrink or some else modifications. */
     for (i = 0; i < n; i++) {
-        k = map_sg_get(p->hsg, s[i]);
-        if (k == map_sg_end(p->hsg)) { return -1; }
+        k = kh_get(sample_group, p->hsg, s[i]);
+        if (k == kh_end(p->hsg)) { return -1; }
         else { p->hsg_iter[i] = k; }
     }
     p->nsg = n;
@@ -327,7 +327,7 @@ int csp_mplp_str_vcf(csp_mplp_t *mplp, kstring_t *s) {
     int i;
     for (i = 0; i < mplp->nsg; i++) {
         kputc_('\t', s);
-        if (csp_plp_str_vcf(map_sg_val(mplp->hsg, mplp->hsg_iter[i]), s) < 0) { return -1; }
+        if (csp_plp_str_vcf(kh_val(mplp->hsg, mplp->hsg_iter[i]), s) < 0) { return -1; }
     } //s->s[--(s->l)] = '\0';    /* s->l could not be negative unless no csp_plp_t(s) are printed to s->s. */
     return 0;
 }
@@ -336,7 +336,7 @@ int csp_mplp_to_vcf(csp_mplp_t *mplp, jfile_t *s) {
     int i;
     for (i = 0; i < mplp->nsg; i++) {
         jf_putc_('\t', s);
-        if (csp_plp_to_vcf(map_sg_val(mplp->hsg, mplp->hsg_iter[i]), s) < 0) { return -1; }
+        if (csp_plp_to_vcf(kh_val(mplp->hsg, mplp->hsg_iter[i]), s) < 0) { return -1; }
     } //s->s[--(s->l)] = '\0';    /* s->l could not be negative unless no csp_plp_t(s) are printed to s->s. */
     return 0;
 }
@@ -345,7 +345,7 @@ int csp_mplp_str_mtx(csp_mplp_t *mplp, kstring_t *ks_ad, kstring_t *ks_dp, kstri
     csp_plp_t *plp;
     int i;
     for (i = 1; i <= mplp->nsg; i++) {
-        plp = map_sg_val(mplp->hsg, mplp->hsg_iter[i]);
+        plp = kh_val(mplp->hsg, mplp->hsg_iter[i]);
         if (plp->ad) ksprintf(ks_ad, "%ld\t%d\t%ld\n", idx, i, plp->ad);
         if (plp->dp) ksprintf(ks_dp, "%ld\t%d\t%ld\n", idx, i, plp->dp);
         if (plp->oth) ksprintf(ks_oth, "%ld\t%d\t%ld\n", idx, i, plp->oth);        
@@ -359,7 +359,7 @@ int csp_mplp_str_mtx_tmp(csp_mplp_t *mplp, kstring_t *ks_ad, kstring_t *ks_dp, k
     csp_plp_t *plp;
     int i;
     for (i = 1; i <= mplp->nsg; i++) {
-        plp = map_sg_val(mplp->hsg, mplp->hsg_iter[i]);
+        plp = kh_val(mplp->hsg, mplp->hsg_iter[i]);
         if (plp->ad) ksprintf(ks_ad, "%d\t%ld\n", i, plp->ad);
         if (plp->dp) ksprintf(ks_dp, "%d\t%ld\n", i, plp->dp);
         if (plp->oth) ksprintf(ks_oth, "%d\t%ld\n", i, plp->oth);        
@@ -372,7 +372,7 @@ int csp_mplp_to_mtx(csp_mplp_t *mplp, jfile_t *fs_ad, jfile_t *fs_dp, jfile_t *f
     csp_plp_t *plp;
     int i;
     for (i = 1; i <= mplp->nsg; i++) {
-        plp = map_sg_val(mplp->hsg, mplp->hsg_iter[i - 1]);
+        plp = kh_val(mplp->hsg, mplp->hsg_iter[i - 1]);
         if (plp->ad) fs_ad->is_tmp ? jf_printf(fs_ad, "%d\t%ld\n", i, plp->ad) : jf_printf(fs_ad, "%ld\t%d\t%ld\n", idx, i, plp->ad);
         if (plp->dp) fs_dp->is_tmp ? jf_printf(fs_dp, "%d\t%ld\n", i, plp->dp) : jf_printf(fs_dp, "%ld\t%d\t%ld\n", idx, i, plp->dp);
         if (plp->oth) fs_oth->is_tmp ? jf_printf(fs_oth, "%d\t%ld\n", i, plp->oth) : jf_printf(fs_oth, "%ld\t%d\t%ld\n", idx, i, plp->oth);      

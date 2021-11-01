@@ -343,7 +343,7 @@ static inline int infer_nthread(global_settings *gs) {
  */
 int csp_fetch(global_settings *gs) {
     /* check options (input) */
-    if (NULL == gs || gs->nin <= 0 || (gs->nbarcode <= 0 && gs->nsid <= 0) || snplist_size(gs->pl) <= 0 || \
+    if (NULL == gs || gs->nin <= 0 || (gs->nbarcode <= 0 && gs->nsid <= 0) || kv_size(gs->pl) <= 0 || \
             NULL == gs->out_dir) {
         fprintf(stderr, "[E::%s] error options for fetch modes.\n", __func__);
         return -1;
@@ -366,9 +366,9 @@ int csp_fetch(global_settings *gs) {
     jfile_t **out_tmp_mtx_ad, **out_tmp_mtx_dp, **out_tmp_mtx_oth, **out_tmp_vcf_base, **out_tmp_vcf_cells;
     out_tmp_mtx_ad = out_tmp_mtx_dp = out_tmp_mtx_oth = out_tmp_vcf_base = out_tmp_vcf_cells = NULL;
     /* calc number of threads and number of SNPs for each thread. */
-    mtd = min2(snplist_size(gs->pl), nthread);
-    mpos = snplist_size(gs->pl) / mtd;
-    rpos = snplist_size(gs->pl) - mpos * mtd;     // number of remaining positions
+    mtd = min2(kv_size(gs->pl), nthread);
+    mpos = kv_size(gs->pl) / mtd;
+    rpos = kv_size(gs->pl) - mpos * mtd;     // number of remaining positions
     /* create output tmp filenames. */
     if (NULL == (out_tmp_mtx_ad = create_tmp_files(gs->out_mtx_ad, mtd, CSP_TMP_ZIP))) {
         fprintf(stderr, "[E::%s] fail to create tmp files for mtx_AD.\n", __func__);

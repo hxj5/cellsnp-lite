@@ -75,11 +75,11 @@ size_t get_snplist_from_vcf(const char *fn, snplist_t *pl, int *ret, int print_s
                 continue;                 
             } // else: keep alt = 0.
         } // else: do nothing. keep ref = alt = 0, 0 is their init values.
-        snplist_push(*pl, ip);
+        kv_push(snp_t*, *pl, ip);
         n++;
     }
     if (-1 == r) { // end of bcf file.
-        snplist_resize(*pl, snplist_size(*pl));
+        kv_resize(snp_t*, *pl, kv_size(*pl));
     } else { 
         fprintf(stderr, "[E::%s] error when parsing '%s'\n", __func__, fn); 
         goto fail; 

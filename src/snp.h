@@ -31,33 +31,12 @@ snp_t* snp_init(void);
 void snp_destroy(snp_t *p); 
 void snp_reset(snp_t *p); 
 
-/*@abstract  A list containing of several pointers to the snp_t structure.
-@param a     Array of snp_t* pointers.
-@param n     The next pos of the unused element of the array.
-@param m     Size of the whole array.
-
-@note        The snplist_t structure should be freed by snplist_destroy() when no longer used.
-             snplist_init() function should be called immediately after the structure was created.
-
-@example (A simple example from kvec.h)
-    kvec_t(int) array;
-    kv_init(array);
-    kv_push(int, array, 10); // append
-    kv_A(array, 20) = 4;
-    kv_destroy(array);
- */
-typedef kvec_t(snp_t*) snplist_t;   /* kvec_t from kvec.h */
-#define snplist_init(v) kv_init(v)
-#define snplist_resize(v, size) kv_resize(snp_t*, v, size)
-#define snplist_push(v, x) kv_push(snp_t*, v, x)
-#define snplist_A(v, i) kv_A(v, i)
-#define snplist_size(v) kv_size(v)
-#define snplist_max(v) kv_max(v)
-#define snplist_destroy(v) {								\
-    size_t __j;											\
-    for (__j = 0; __j < snplist_size(v); __j++) snp_destroy(snplist_A(v, __j));	\
-    kv_destroy(v);										\
-    (v).a = NULL; (v).m = (v).n = 0;                                                            \
+typedef kvec_t(snp_t*) snplist_t;  
+#define snplist_destroy(v) {				\
+    size_t __j;						\
+    for (__j = 0; __j < kv_size(v); __j++) snp_destroy(kv_A(v, __j));	\
+    kv_destroy(v);					\
+    (v).a = NULL; (v).m = (v).n = 0;                    \
 }
 
 /*@abstract    Extract SNP info from bcf/vcf file.
@@ -85,3 +64,4 @@ void biallele_destroy(biallele_t *p);
 void biallele_reset(biallele_t *p);
 
 #endif
+

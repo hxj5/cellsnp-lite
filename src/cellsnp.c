@@ -79,7 +79,7 @@ static void gll_set_default(global_settings *gs) {
         gs->out_vcf_base = NULL; gs->out_vcf_cells = NULL; gs->out_samples = NULL;
         gs->out_mtx_ad = NULL; gs->out_mtx_dp = NULL; gs->out_mtx_oth = NULL;
         gs->is_genotype = 0; gs->is_out_zip = 0;
-        gs->snp_list_file = NULL; snplist_init(gs->pl); gs->is_target = 0; gs->targets = NULL;
+        gs->snp_list_file = NULL; kv_init(gs->pl); gs->is_target = 0; gs->targets = NULL;
         gs->barcode_file = NULL; gs->nbarcode = 0; gs->barcodes = NULL; 
         gs->sid_list_file = NULL; gs->sample_ids = NULL; gs->nsid = 0;
         char *chrom_tmp[] = CSP_CHROM_ALL;
@@ -549,7 +549,7 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "[E::%s] get SNP list from '%s' failed.\n", __func__, gs.snp_list_file);
                 print_time = 1; goto fail;
             } else { 
-                n = snplist_size(gs.pl);
+                n = kv_size(gs.pl);
                 fprintf(stderr, "[I::%s] pileuping %ld candidate variants ...\n", __func__, n); 
             }
             if (NULL == (gs.targets = regidx_init(NULL, NULL, regidx_payload_free, sizeof(biallele_t*), NULL))) {
@@ -557,7 +557,7 @@ int main(int argc, char **argv) {
                 print_time = 1; goto fail;
             } 
             for (i = 0; i < n; i++) {
-                snp = snplist_A(gs.pl, i);
+                snp = kv_A(gs.pl, i);
                 if (NULL == (*ale = biallele_init())) { 
                    fprintf(stderr, "[E::%s] failed to create biallele_t.\n", __func__);
                    print_time = 1; goto fail;
@@ -589,7 +589,7 @@ int main(int argc, char **argv) {
             if (get_snplist(gs.snp_list_file, &gs.pl, &ret, print_skip_snp) <= 0 || ret < 0) {
                 fprintf(stderr, "[E::%s] get SNP list from '%s' failed.\n", __func__, gs.snp_list_file);
                 print_time = 1; goto fail;
-            } else { fprintf(stderr, "[I::%s] fetching %ld candidate variants ...\n", __func__, snplist_size(gs.pl)); }
+            } else { fprintf(stderr, "[I::%s] fetching %ld candidate variants ...\n", __func__, kv_size(gs.pl)); }
             if (gs.barcodes) { 
                 fprintf(stderr, "[I::%s] mode 1a: fetch given SNPs in %d single cells.\n", __func__, gs.nbarcode); 
                 if (run_mode1a(&gs) < 0) { fprintf(stderr, "[E::%s] running mode 1a failed.\n", __func__); print_time = 1; goto fail; } 

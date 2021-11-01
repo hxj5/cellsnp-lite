@@ -13,6 +13,7 @@
 #include "jfile.h"
 #include "jmempool.h"
 #include "config.h"
+#include "biods.h"
 
 /*
 * Pileup and MPileup API
@@ -61,19 +62,6 @@ void csp_pileup_reset_(csp_pileup_t *p);
 
 void csp_pileup_print(FILE *fp, csp_pileup_t *p);
 
-/*@abstract   Pool that stores char*. The real elements in the pool are char**.
-@example      Refer to the example of JMEMPOOL in general_util.h.
-@note         This structure is aimed to store dynamically allocated strings(char*).
- */
-#define pool_str_free(s) free(*(s))
-#define pool_str_reset(s) free(*(s))
-JMEMPOOL_INIT(ps, char*, pool_str_free, pool_str_reset)
-typedef jmempool_t(ps) pool_ps_t;
-#define pool_ps_init() jmempool_init(ps)
-#define pool_ps_destroy(p) jmempool_destroy(ps, p)
-#define pool_ps_get(p) jmempool_get(ps, p)
-#define pool_ps_reset(p) jmempool_reset(ps, p)
-
 /*@abstract    This structure stores stat info of one read of one UMI group for certain query pos.
 @param base    The base for the query pos in the read of the UMI gruop.
                A 4-bit integer returned by bam_seqi(), which is related to bam_nt16_table(now called seq_nt16_str).
@@ -88,50 +76,22 @@ umi_unit_t* umi_unit_init(void);
 #define umi_unit_reset(p)
 void umi_unit_destroy(umi_unit_t *p);
 
-/*@abstract   Pool that stores umi_unit_t structures. The real elements in the pool are pointers to the umi_unit_t structures.
-              The pool is aimed to save the overhead of reallocating memories for umi_unit_t structures.
-@example      Refer to the example of JMEMPOOL in general_util.h.
- */
-JMEMPOOL_INIT(uu, umi_unit_t, umi_unit_destroy, umi_unit_reset)
-typedef jmempool_t(uu) pool_uu_t;
-#define pool_uu_init() jmempool_init(uu)
-#define pool_uu_destroy(p) jmempool_destroy(uu, p)
-#define pool_uu_get(p) jmempool_get(uu, p)
-#define pool_uu_reset(p) jmempool_reset(uu, p)
+JMEMPOOL_INIT(umi_unit, umi_unit_t, umi_unit_destroy, umi_unit_reset)
+typedef jmempool_t(umi_unit) pool_uu_t;
 
-/* Struct list_uu_t APIs 
-@abstract  The structure stores stat info of all reads of one UMI group for certain query pos.
-@param v   Pointer to the list_uu_t structure [list_uu_t*].
-
-@note      1. The elements in the list are pointers of umi_unit_t, resetting the list only sets
-              the list's internal var n, which stands for the next available pos in the list, to be 0.
-              After calling reset function, the values (i.e. pointers of umi_unit_t from pool_uu) 
-              newly pushed into the list would overwrite the original ones, which will not cause memory error. 
-           2. The parameter in list_uu_xxx functions is pointer of list_uu_t.
-
-@example   Refer to the example in kvec.h, but the parameter in list_uu_xxx functions is pointer, 
-           which is different from kv_xxx functions.
+/* @abstract  The structure stores stat info of all reads of one UMI group for certain query pos.
+@note The elements in the list are pointers of umi_unit_t, resetting the list only sets
+      the list's internal var n, which stands for the next available pos in the list, to be 0.
+      After calling reset function, the values (i.e. pointers of umi_unit_t from pool_uu) 
+      newly pushed into the list would overwrite the original ones, which will not cause memory error. 
  */
 typedef kvec_t(umi_unit_t*) list_uu_t;
 list_uu_t* list_uu_init(void);
-#define list_uu_resize(v, size) kv_resize(umi_unit_t*, *(v), size)
-#define list_uu_push(v, x) kv_push(umi_unit_t*, *(v), x)
-#define list_uu_A(v, i) kv_A(*(v), i)
-#define list_uu_size(v) kv_size(*(v))
-#define list_uu_max(v) kv_max(*(v))
 #define list_uu_destroy(v) kv_destroy(*(v))
 #define list_uu_reset(v) ((v)->n = 0)
 
-/*@abstract   Pool that stores list_uu_t structures. The real elements in the pool are pointers to the list_uu_t structures.
-              The pool is aimed to save the overhead of reallocating memories for list_uu_t structures.
-@example      Refer to the example of JMEMPOOL in general_util.h.
- */
-JMEMPOOL_INIT(ul, list_uu_t, list_uu_destroy, list_uu_reset)
-typedef jmempool_t(ul) pool_ul_t;
-#define pool_ul_init() jmempool_init(ul)
-#define pool_ul_destroy(p) jmempool_destroy(ul, p)
-#define pool_ul_get(p) jmempool_get(ul, p)
-#define pool_ul_reset(p) jmempool_reset(ul, p)
+JMEMPOOL_INIT(list_umiunit, list_uu_t, list_uu_destroy, list_uu_reset)
+typedef jmempool_t(list_umiunit) pool_ul_t;
 
 /*@abstract    The HashMap maps UMI-group-name (char*) to list_uu_t (*).
 
@@ -158,45 +118,21 @@ int main() {
 // specifically, the array is a[5] with each element being
 // a list_uu_t* and the umi_unit_t could be changed to
 // struct { int8_t qual; }.
-KHASH_MAP_INIT_STR(ug, list_uu_t*)
-typedef khash_t(ug) map_ug_t;
-#define map_ug_iter khiter_t
-#define map_ug_init() kh_init(ug)
-#define map_ug_resize(h, s) kh_resize(ug, h, s)
-#define map_ug_put(h, k, r)  kh_put(ug, h, k, r)
-#define map_ug_get(h, k) kh_get(ug, h, k)
-#define map_ug_del(h, k) kh_del(ug, h, k)
-#define map_ug_exist(h, x) kh_exist(h, x)
-#define map_ug_key(h, x) kh_key(h, x)
-#define map_ug_val(h, x) kh_val(h, x)
-#define map_ug_begin(h) kh_begin(h)
-#define map_ug_end(h) kh_end(h)
-#define map_ug_size(h) kh_size(h)
-#define map_ug_reset(h) kh_clear(ug, h)
-#define map_ug_destroy(h) {								\
-    if (h) {										\
-        map_ug_iter __k;								\
-        for (__k = map_ug_begin(h); __k != map_ug_end(h); __k++) { 			\
-            if (map_ug_exist(h, __k)) list_uu_destroy(map_ug_val(h, __k));		\
-        }											\
-        kh_destroy(ug, h);									\
-    }												\
+KHASH_MAP_INIT_STR(umi_group, list_uu_t*)
+typedef khash_t(umi_group) map_ug_t;
+#define map_ug_reset(h) kh_clear(umi_group, h)
+#define map_ug_destroy(h) {					\
+    if (h) {							\
+        khiter_t __k;						\
+        for (__k = kh_begin(h); __k != kh_end(h); __k++) { 		\
+            if (kh_exist(h, __k)) list_uu_destroy(kh_val(h, __k));	\
+        }							\
+        kh_destroy(umi_group, h);				\
+    }								\
 }
 
-/* Struct list_qu_t APIs 
-@abstract  The structure stores all qual value of one sample for certain query pos.
-@param v   The list_qu_t structure [list_qu_t].
-
-@example   Refer to the example in kvec.h.
- */
-typedef kvec_t(int8_t) list_qu_t;
-#define list_qu_init(v) kv_init(v)
-#define list_qu_resize(v, size) kv_resize(int8_t, v, size)
-#define list_qu_push(v, x) kv_push(int8_t, v, x)
-#define list_qu_A(v, i) kv_A(v, i)
-#define list_qu_size(v) kv_size(v)
-#define list_qu_max(v) kv_max(v)
-#define list_qu_destroy(v) kv_destroy(v)
+typedef int8_t qual_t;
+typedef kvec_t(qual_t) list_qu_t;
 #define list_qu_reset(v) ((v).n = 0)
 
 /*@abstract    Internal function to convert the base call quality score to related values for different genotypes.
@@ -290,41 +226,28 @@ int csp_plp_str_vcf(csp_plp_t *p, kstring_t *s);
 
 int csp_plp_to_vcf(csp_plp_t *p, jfile_t *s);
 
-/*@abstract    The HashMap maps sample-group-name (char*) to csp_plp_t (*).
-@example       Refer to a simple example in khash.h.
- */
-KHASH_MAP_INIT_STR(sg, csp_plp_t*)
-typedef khash_t(sg) map_sg_t;
-#define map_sg_iter khiter_t
-#define map_sg_init() kh_init(sg)
-#define map_sg_clear(h) kh_clear(sg, h)
-#define map_sg_resize(h, s) kh_resize(sg, h, s)
-#define map_sg_put(h, k, r)  kh_put(sg, h, k, r)
-#define map_sg_get(h, k) kh_get(sg, h, k)
-#define map_sg_del(h, k) kh_del(sg, h, k)
-#define map_sg_exist(h, x) kh_exist(h, x)
-#define map_sg_key(h, x) kh_key(h, x)
-#define map_sg_val(h, x) kh_val(h, x)
-#define map_sg_begin(h) kh_begin(h)
-#define map_sg_end(h) kh_end(h)
-#define map_sg_size(h) kh_size(h)
-#define map_sg_destroy(h) {								\
-    if (h) {											\
-        map_sg_iter __k;									\
-        for (__k = map_sg_begin(h); __k != map_sg_end(h); __k++) { 			\
-            if (map_sg_exist(h, __k)) csp_plp_destroy(map_sg_val(h, __k)); 	\
-        }										\
-        kh_destroy(sg, h);									\
-    }												\
+// The HashMap maps sample-group-name (char*) to csp_plp_t (*).
+KHASH_MAP_INIT_STR(sample_group, csp_plp_t*)
+typedef khash_t(sample_group) map_sg_t;
+#define map_sg_destroy(h) {					\
+    if (h) {							\
+        khiter_t __k;						\
+        for (__k = kh_begin(h); __k != kh_end(h); __k++) { 		\
+            if (kh_exist(h, __k)) csp_plp_destroy(kh_val(h, __k)); 	\
+        }								\
+        kh_destroy(sample_group, h);					\
+    }								\
 }
-#define map_sg_reset_val(h) {								\
-    if (h) {											\
-        map_sg_iter __k;									\
-        for (__k = map_sg_begin(h); __k != map_sg_end(h); __k++) {			\
-            if (map_sg_exist(h, __k)) csp_plp_reset(map_sg_val(h, __k)); 		\
-        }											\
-    }												\
+#define map_sg_reset_val(h) {					\
+    if (h) {							\
+        khiter_t __k;						\
+        for (__k = kh_begin(h); __k != kh_end(h); __k++) {		\
+            if (kh_exist(h, __k)) csp_plp_reset(kh_val(h, __k)); 	\
+        }								\
+    }									\
 }
+
+typedef pool_str_t pool_ps_t;
 
 //TODO: use kstring_t instead of char* in mplp_t::su as its base element type.
 //Previously, we use a pool (actually as a array) to store all UMI strings (char*)
@@ -345,7 +268,7 @@ typedef khash_t(sg) map_sg_t;
 @param oth   Read count of bases except alt and ref.
 @param nr_*  Num of records/lines outputed to mtx file for certain SNP/pos.
 @param hsg   HashMap that stores the stat info of all sample groups for the pos.
-@param hsg_iter Pointer of array of map_sg_iter. The iter in the array is in the same order of sg names.
+@param hsg_iter Pointer of array of khiter_t. The iter in the array is in the same order of sg names.
 @param nsg   Size of map_sg_iter array hsg_iter.
 @param pu    Pool of umi_unit_t structures.
 @param pl    Pool of list_uu_t structures.
@@ -358,7 +281,7 @@ typedef struct {
     size_t tc, ad, dp, oth;
     size_t nr_ad, nr_dp, nr_oth;
     map_sg_t *hsg;
-    map_sg_iter *hsg_iter;
+    khiter_t *hsg_iter;
     int nsg;
     pool_uu_t *pu;
     pool_ul_t *pl;
@@ -490,3 +413,4 @@ void mtx_tag_fs_destroy(mtx_tag_fs *p) {
 #endif
 
 #endif
+

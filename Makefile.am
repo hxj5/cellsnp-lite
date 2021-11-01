@@ -35,3 +35,4 @@ cellsnp_lite_LDADD = @HTSLIB_LIB@
 
 ## Define which files should be removed by `make clean` target
 CLEANFILES = *.o a.out src/*.o cellsnp-lite
+
