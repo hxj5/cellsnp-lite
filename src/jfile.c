@@ -60,7 +60,7 @@ ssize_t jf_read(jfile_t *p, char *buf, size_t len) {
     return p->is_zip ? jf_zread(p->zfp, buf, len) : fread(buf, 1, len, p->fp);
 }
 
-//@note        kgetline() is defined in htslib/kstring.h 
+//@note kgetline() is defined in htslib/kstring.h 
 int jf_getln(jfile_t *p, kstring_t *s) {
     return p->is_zip ? jf_zgetln(p->zfp, s) : kgetline(s, (kgets_func*) fgets, p->fp);
 }
@@ -114,7 +114,7 @@ int jf_write(jfile_t *p, char *buf, size_t len) {
     return l;
 }
 
-//@note        Even fail, the jfile_t will still be set to not open.
+//@note  Even fail, the jfile_t will still be set to not open.
 int jf_close(jfile_t *p) {
     int ret = 0;
     if (p->is_open) {
@@ -145,7 +145,7 @@ int jf_remove_all(jfile_t **fs, const int n) {
 * File Functions
  */
 
-//@note         Only works for Unix system as the path seperator used in this function is '/'.
+//@note  Only works for Unix system as the path seperator used in this function is '/'.
 char* join_path(const char *p1, const char *p2) {
     kstring_t ks = KS_INITIALIZE, *s = &ks;
     char *p = NULL;

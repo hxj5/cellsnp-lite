@@ -41,11 +41,11 @@ static inline void mp_aux_destroy(mp_aux_t *p) {
 
 static inline void mp_aux_reset(mp_aux_t *p) { }
 
-/*@abstract  bam_plp_auto_f used by bam_mplp_init to extract valid reads to be pushed into bam_mpileup stack.
+/*!@func
+@abstract    bam_plp_auto_f used by bam_mplp_init to extract valid reads to be pushed into bam_mpileup stack.
 @param data  Pointer to auxiliary data.
 @param b     Pointer to bam1_t structure.
 @return      0 on success, -1 on end, < -1 on non-recoverable errors. refer to htslib/sam.h @func bam_plp_init.
-
 @note        This function refers to @func mplp_func in bcftools/mpileup.c.   
 */
 static int mp_func(void *data, bam1_t *b) {
@@ -72,13 +72,13 @@ static int mp_func(void *data, bam1_t *b) {
     return ret;
 }
 
-/*@abstract  Pileup one read.
+/*!@func
+@abstract    Pileup one read.
 @param pos   Pos of the reference sequence. 0-based.
 @param bp    Pointer of bam_pileup1_t containing pileup-ed results.
 @param p     Pointer of csp_pileup_t structure coming from csp_pileup_init() or csp_pileup_reset().
 @param gs    Pointer of global settings.
 @return      0 if success, -1 if error, 1 if the reads extracted are not in proper format, 2 if not passing filters.
-
 @note        1. This function is modified from cigar_resolve2() function in sam.c of htslib.
                 Link: https://github.com/samtools/htslib/blob/develop/sam.c#L4526
              2. Reads filtering is also applied inside this function, including:
@@ -118,7 +118,8 @@ static int pileup_read(hts_pos_t pos, const bam_pileup1_t *bp, csp_pileup_t *p, 
     return 0;
 }
 
-/*@abstract    Pileup One SNP.
+/*!@func
+@abstract      Pileup One SNP.
 @param pos     Pos of pileup-ed snp.
 @param mp_n    Pointer of array containing numbers of bam_pileup1_t* pileup-ed from each file.
 @param mp_plp  Pointer of array containing bam_pileup1_t* pileup-ed from each file.
@@ -127,7 +128,6 @@ static int pileup_read(hts_pos_t pos, const bam_pileup1_t *bp, csp_pileup_t *p, 
 @param mplp    Pointer of csp_mplp_t structure.
 @param gs      Pointer of global_settings structure.
 @return        0 if success, -1 if error, 1 if pileup failure without error.
-
 @note          1. This function is mainly called by csp_pileup_core(). Refer to csp_pileup_core() for notes.
                2. The statistics result of all pileuped reads for one SNP is stored in the csp_mplp_t after calling this function.
 */
@@ -169,24 +169,24 @@ static int pileup_snp(hts_pos_t pos, int *mp_n, const bam_pileup1_t **mp_plp, in
     return state;
 }
 
-/*@abstract  Pileup regions (several chromosomes).
+/*!@func
+@abstract    Pileup regions (several chromosomes).
 @param args  Pointer to thread_data structure.
 @return      Num of SNPs, including those filtered, that are processed.
-
-@note        1. The internal variable "ret" in thread_data structure saves the running state of the function:
-                  0 if success, 1 if error of other threads.
-                  -1, undefined errno in this thread.
-                  -2, open error in this thread.
-             2. This function could be used by Mode2 & Mode1a(-T) & Mode1b(-T).
-             3. Refering to @func mpileup from bam_plcmd.c in @repo samtools, the @p mp_iter, @p mp_plp and
-                @p mp_n do not need to be reset every time calling bam_mplp_auto(). Guess that there may be 
-                memory pools inside bam_mplp_* for these structures.
-             4. TODO: check consistency among headers. For now not sure the pileup-ed @p tid from @func 
-                  bam_mplp_auto() is corresponded to which file's header for different files may have different 
-                  target_names in their headers.
-             5. TODO: Refering to @func mpileup from bam_plcmd.c in @repo samtools, the hts_itr_t* structure is
-                  reused directly without destroying-creating again. is it a good way? it may speed up if 
-                  donot repeat the create-destroy-create-... process.
+@note  1. The internal variable "ret" in thread_data structure saves the running state of the function:
+         0 if success, 1 if error of other threads.
+         -1, undefined errno in this thread.
+         -2, open error in this thread.
+       2. This function could be used by Mode2 & Mode1a(-T) & Mode1b(-T).
+       3. Refering to @func mpileup from bam_plcmd.c in @repo samtools, the @p mp_iter, @p mp_plp and
+          @p mp_n do not need to be reset every time calling bam_mplp_auto(). Guess that there may be 
+          memory pools inside bam_mplp_* for these structures.
+       4. TODO: check consistency among headers. For now not sure the pileup-ed @p tid from @func 
+            bam_mplp_auto() is corresponded to which file's header for different files may have different 
+            target_names in their headers.
+       5. TODO: Refering to @func mpileup from bam_plcmd.c in @repo samtools, the hts_itr_t* structure is
+            reused directly without destroying-creating again. is it a good way? it may speed up if 
+            donot repeat the create-destroy-create-... process.
  */
 static int csp_pileup_core(void *args) {
     thread_data *d = (thread_data*) args;
@@ -417,10 +417,11 @@ static int csp_pileup_core(void *args) {
 }
 
 #if CSP_FIT_MULTI_SMP
-/*@abstract  Infer appropriate number of threads for multi samples to
-             avoid the issue that too many open files
-@param gs    Pointer to global_settings
-@return      Infered nthread value, no more than 1.
+/*!@func
+@abstract  Infer appropriate number of threads for multi samples to
+           avoid the issue that too many open files
+@param gs  Pointer to global_settings
+@return    Infered nthread value, no more than 1.
 */
 static inline int infer_nthread(global_settings *gs) {
     if (gs->tp_ntry == 0) { return gs->mthread; }  // the first time to try, just use the value user specified
@@ -435,9 +436,10 @@ static inline int infer_nthread(global_settings *gs) {
 }
 #endif
 
-/*abstract  Run cellSNP Mode with method of pileuping.
-@param gs   Pointer to the global_settings structure.
-@return     0 if success, -1 otherwise.
+/*!@func
+@abstract  Run cellSNP Mode with method of pileuping.
+@param gs  Pointer to the global_settings structure.
+@return    0 if success, -1 otherwise.
  */
 int csp_pileup(global_settings *gs) {
     /* check options (input) */
@@ -734,5 +736,4 @@ int csp_pileup(global_settings *gs) {
     return -1;
   #endif
 }
-
 

@@ -20,10 +20,6 @@
 * Pileup and MPileup API
  */
 
-/*@note       1. Memory for bam1_t is allocated in this function.
-              2. The pointer returned successfully by csp_pileup_init() should be freed
-                 by csp_pileup_destroy() when no longer used.
- */
 csp_pileup_t* csp_pileup_init(void) {
     csp_pileup_t *p = (csp_pileup_t*) malloc(sizeof(csp_pileup_t));
     if (p) {
@@ -39,8 +35,6 @@ void csp_pileup_destroy(csp_pileup_t *p) {
     } 
 }
 
-/* reset the csp_pileup_t structure without reallocating memory.
-   return 0 if success, -1 otherwise. */
 int csp_pileup_reset(csp_pileup_t *p) {
     if (p) {
         if (p->b) { bam_destroy1(p->b); }
@@ -50,8 +44,6 @@ int csp_pileup_reset(csp_pileup_t *p) {
     return 0;
 }
 
-/* only reset part of the csp_pileup_t as values of parameters in other parts will be immediately overwritten after
-   calling this function. It's often called by pileup_read_with_fetch(). */
 void csp_pileup_reset_(csp_pileup_t *p) { }
 
 void csp_pileup_print(FILE *fp, csp_pileup_t *p) {
@@ -85,9 +77,6 @@ int get_qual_vector(double qual, double cap_bq, double min_bq, double *rv) {
     return 0;
 }
 
-/*@note         TODO: In some special cases, ref=A and alt=AG for example, the ref_idx would be equal with alt_idx.
-                Should be fixed in future.
- */
 int qual_matrix_to_geno(double qm[][4], size_t *bc, int8_t ref_idx, int8_t alt_idx, int db, double *gl, int *n) {
     int8_t other_idx[4], noth, i;
     size_t ref_read, alt_read;
@@ -115,8 +104,7 @@ int qual_matrix_to_geno(double qm[][4], size_t *bc, int8_t ref_idx, int8_t alt_i
     return 0;
 }
 
-/*@note           It's usually called when the input pos has no ref or alt.
- */
+//@note It's usually called when the input pos has no ref or alt.
 void infer_allele(size_t *bc, int8_t *ref_idx, int8_t *alt_idx) {
     int8_t i, k1, k2;
     size_t m1, m2;
@@ -227,10 +215,6 @@ int csp_plp_to_vcf(csp_plp_t *p, jfile_t *s) {
     return 0;
 }
 
-/*@note      1. The kstring_t s is also initialized inside this function.   
-             2. The valid pointer returned by this function should be freed by csp_mplp_destroy() function
-                   when no longer used.
- */
 csp_mplp_t* csp_mplp_init(void) { 
     csp_mplp_t *p = (csp_mplp_t*) calloc(1, sizeof(csp_mplp_t));
     return p;
@@ -293,11 +277,6 @@ void csp_mplp_print_(FILE *fp, csp_mplp_t *p, char *prefix) {
     fprintf(fp, "%snum of sample group = %d\n", prefix, p->nsg);
 }
 
-/*@note      1. This function should be called just one time right after csp_mplp_t structure was created
-                becuase the sgname wouldn't change once set.
-             2. The HashMap (for sgnames) in csp_mplp_t should be empty or NULL.
-             3. The keys of HashMap are exactly pointers to sg names coming directly from @p s.
- */
 int csp_mplp_set_sg(csp_mplp_t *p, char **s, const int n) {
     if (NULL == p || NULL == s || 0 == n) { return -1; }
     int i, r;
@@ -312,8 +291,9 @@ int csp_mplp_set_sg(csp_mplp_t *p, char **s, const int n) {
             else { return -2; } /* r = 0 means repeatd sgnames. */
         } else { return -1; }
     }
-    /* Storing iter index for each sg (sample group) name must be done after all sg names have been pushed into 
-       the HashMap in case that the internal arrays of HashMap autoly shrink or some else modifications. */
+    // Storing iter index for each sg (sample group) name must be done after all sg names have been 
+    // pushed into the HashMap in case that the internal arrays of HashMap autoly shrink or some 
+    // else modifications.
     for (i = 0; i < n; i++) {
         k = kh_get(sample_group, p->hsg, s[i]);
         if (k == kh_end(p->hsg)) { return -1; }
@@ -353,8 +333,6 @@ int csp_mplp_str_mtx(csp_mplp_t *mplp, kstring_t *ks_ad, kstring_t *ks_dp, kstri
     return 0; 
 }
 
-/*@note          This function is used for tmp files.
- */
 int csp_mplp_str_mtx_tmp(csp_mplp_t *mplp, kstring_t *ks_ad, kstring_t *ks_dp, kstring_t *ks_oth) {
     csp_plp_t *plp;
     int i;

@@ -66,12 +66,8 @@
 #include "mplp.h"
 #include "snp.h"
 
-/*@abstract    Set default values for global_settings structure.
-@param gs      Pointer to global_settings structure returned by gll_setting_init().
-@return        Void.
-
-@note          Internal use only!
- */
+// Set default values for global_settings structure.
+// Internal use only!
 static void gll_set_default(global_settings *gs) {
     if (gs) {
         gs->in_fn_file = NULL; gs->in_fns = NULL; gs->nin = 0;
@@ -165,15 +161,13 @@ static inline int cmp_barcodes(const void *x, const void *y) {
     return strcmp(*((char**) x), *((char**) y));
 }
 
-/*@abstract    Perform basic check for global settings right after running getopt()/getopt_long() function.
-@param gs      Pointer to the global settings.
-@return        0 if no error, negative numbers otherwise:
-                 -1, should print_usage after return.
-                 -2, no action.
-
-@note          This is just basic check for the shared parameters of different running modes.
-               More careful and personalized check would be performed by each running mode.
- */
+/*!@func
+@abstract  Perform basic check for global settings right after running getopt()/getopt_long() function.
+@param gs  Pointer to the global settings.
+@return    0 if no error, negative numbers otherwise:
+             -1, should print_usage after return.
+             -2, no action.
+*/
 static int check_args(global_settings *gs) {
     int i;
     struct rlimit r;
@@ -280,7 +274,8 @@ static int check_args(global_settings *gs) {
     return 0;
 }
 
-/*@abstract    Output headers to files (vcf, mtx etc.)
+/*!@func
+@abstract      Output headers to files (vcf, mtx etc.)
 @param fs      Pointer of jfile_t that the header will be writen into.
 @param fm      File mode; if NULL, use default file mode inside jfile_t.
 @param header  Header to be outputed, ends with '\0'.

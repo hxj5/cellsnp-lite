@@ -20,7 +20,8 @@
     #include <errno.h>
 #endif
 
-/*@abstract  Pileup one read obtained by sam_itr_next().
+/*!@func
+@abstract    Pileup one read obtained by sam_itr_next().
 @param pos   Pos of the reference sequence. 0-based.
 @param p     Pointer of csp_pileup_t structure coming from csp_pileup_init() or csp_pileup_reset().
 @param gs    Pointer of global settings.
@@ -90,7 +91,8 @@ static int fetch_read(hts_pos_t pos, csp_pileup_t *p, global_settings *gs) {
     return 0;
 }
 
-/*@abstract    Pileup one SNP with method fetch.
+/*!@func
+@abstract      Pileup one SNP with method fetch.
 @param snp     Pointer of snp_t structure.
 @param fs      Pointer of array of pointers to the csp_bam_fs structures.
 @param fp      Pointer of array of htsFile* of input files.
@@ -154,7 +156,8 @@ static int fetch_snp(snp_t *snp, csp_bam_fs **fs, htsFile **fp, int nfs, csp_pil
     return state;
 }
 
-/*@abstract  Pileup a region (a list of SNPs) with method of fetching.
+/*!@func
+@abstract    Pileup a region (a list of SNPs) with method of fetching.
 @param args  Pointer to thread_data structure.
 @return      Num of SNPs, including those filtered, that are processed.
 
@@ -319,10 +322,11 @@ static size_t csp_fetch_core(void *args) {
 }
 
 #if CSP_FIT_MULTI_SMP
-/*@abstract  Infer appropriate number of threads for multi samples to
-             avoid the issue that too many open files
-@param gs    Pointer to global_settings
-@return      Infered nthread value, no more than 1.
+/*!@func
+@abstract  Infer appropriate number of threads for multi samples to
+           avoid the issue that too many open files
+@param gs  Pointer to global_settings
+@return    Infered nthread value, no more than 1.
  */
 static inline int infer_nthread(global_settings *gs) {
     if (gs->tp_ntry == 0) { return gs->mthread; }  // the first time to try, just use the value user specified
@@ -337,7 +341,8 @@ static inline int infer_nthread(global_settings *gs) {
 }
 #endif
 
-/*abstract  Run cellSNP Mode with method of fetching.
+/*!@func
+@abstract   Run cellSNP Mode with method of fetching.
 @param gs   Pointer to the global_settings structure.
 @return     0 if success, -1 otherwise.
  */

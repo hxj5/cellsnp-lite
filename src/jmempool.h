@@ -100,58 +100,27 @@ The jmempool_##name##_t
 #define JMEMPOOL_INIT(name, base_type, base_free_f, base_reset_f) 					\
         JMEMPOOL_INIT2(static inline, name, base_type, base_free_f, base_reset_f)
 
-/*@abstract    Declare a JMEMPOOL. 
-@param name    Name of the pool.
-@return        Void.
-*/
 #define jmempool_t(name) jmempool_##name##_t
 
-/*@abstract    Initialize a named pool
-@param name    Name of the pool.
-@return        Pointer to the pool if success, NULL otherwise.
-*/
+//@return Pointer to the pool if success, NULL otherwise.
 #define jmempool_init(name) jmempool_init_##name()
 
-/*@abstract    Destroy a named pool. 
-@param name    Name of the pool.
-@param p       Pointer to the pool.
-@return        Void.
-*/
+//@return Void.
 #define jmempool_destroy(name, p) jmempool_destroy_##name(p)
 
-/*@abstract    Get an available element from the pool.
-@param name    Name of the pool.
-@param p       Pointer to the pool.
-@return        An available element in the pool.
- */
+//@return An available element in the pool.
 #define jmempool_get(name, p) jmempool_get_##name(p)
 
-/*@abstract    Reset the pool without reallocating memory.
-@param name    Name of the pool.
-@param p       Pointer to the pool.
-@return        Void.
- */
+//@return Void.
 #define jmempool_reset(name, p) jmempool_reset_##name(p)
 
-/*@abstract  Return the number of elements have been used in the pool.
-@param name  Name of the pool.
-@param p     Pointer to the pool.
-@return      The number of elements have been used in the pool.
- */
+//@abstract  Return the number of elements have been used in the pool.
 #define jmempool_used(name, p) jmempool_used_##name(p)
 
-/*@abstract  Return the number of elements exist in the pool.
-@param name  Name of the pool.
-@param p     Pointer to the pool.
-@return      The number of elements exist in the pool.
- */
+//@abstract  Return the number of elements exist in the pool.
 #define jmempool_size(name, p) jmempool_size_##name(p)
 
-/*@abstract  Return total size of the pool.
-@param name  Name of the pool.
-@param p     Pointer to the pool.
-@return      Total size of the pool.
- */
+//@abstract  Return total size of the pool.
 #define jmempool_max(name, p) jmempool_max_##name(p)
 
 /*@abstract  Return the element of certain index in the pool.
@@ -159,7 +128,6 @@ The jmempool_##name##_t
 @param p     Pointer to the pool.
 @param i     Index of the element in the pool [size_t].
 @return      The element [base_type*].
-
 @note        1. Be careful that the index i must be less than the total size of pool.
              2. Besides, the returned element could be NULL or element that have not been reset, so there are some steps 
                 to be taken before the element can be used. If you want to get an element that can be used immediately, 
@@ -168,3 +136,4 @@ The jmempool_##name##_t
 #define jmempool_A(name, p, i) jmempool_A_##name(p, i)
 
 #endif
+

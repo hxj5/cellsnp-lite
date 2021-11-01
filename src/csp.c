@@ -41,7 +41,6 @@ void gll_setting_free(global_settings *gs) {
     }
 }
 
-/* print global settings. */
 void gll_setting_print(FILE *fp, global_settings *gs, char *prefix) {
     if (gs) {
         int i;
@@ -112,18 +111,6 @@ int csp_mplp_prepare(csp_mplp_t *mplp, global_settings *gs) {
     return 0;
 }
 
-/*@note 1. To speed up, the caller should guarantee that:
-           a) the parameters are valid, i.e. mplp and gs must not be NULL. In fact, this function is supposed to be 
-              called after csp_mplp_t is created and set names of sample-groups, so mplp, mplp->hsg could not be NULL.
-           b) the csp_pileup_t must have passed the read filtering, refer to pileup_read_with_fetch() for details.
-           c) each key (sample group name) in map_sg_t already has a valid, not NULL, value (csp_plp_t*);
-              This usually can be done by calling csp_mplp_prepare().
-        2. This function is expected to be used by Mode1 & Mode2.
-
-@discuss  In current version, only the result (base and qual) of the first read in one UMI group will be used for mplp statistics.
-          TODO: store results of all reads in one UMI group (maybe could do consistency correction in each UMI group) and then 
-          do mplp statistics.
- */
 int csp_mplp_push(csp_pileup_t *pileup, csp_mplp_t *mplp, int sid, global_settings *gs) {
     khiter_t k;
     khiter_t u;
@@ -165,10 +152,6 @@ int csp_mplp_push(csp_pileup_t *pileup, csp_mplp_t *mplp, int sid, global_settin
     return 0;
 }
 
-/*@discuss  In current version, only the result (base and qual) of the first read in one UMI group will be used for mplp statistics.
-            TODO: store results of all reads in one UMI group (maybe could do consistency correction in each UMI group) and then 
-            do mplp statistics.
- */
 int csp_mplp_stat(csp_mplp_t *mplp, global_settings *gs) {
     csp_plp_t *plp = NULL;
     int i, j, k;
@@ -228,9 +211,6 @@ void csp_bam_fs_destroy(csp_bam_fs* p) {
 * Thread API
 */
 
-/*@note      The pointer returned successfully by thdata_init() should be freed
-             by thdata_destroy() when no longer used.
- */
 thread_data* thdata_init(void) { return (thread_data*) calloc(1, sizeof(thread_data)); }
 
 void thdata_destroy(thread_data *p) { free(p); }
@@ -329,11 +309,6 @@ int merge_vcf(jfile_t *out, jfile_t **in, const int n, int *ret) {
 #undef TMP_BUFSIZE
 }
 
-/*@note      1. When proc = 1, the origial outputed mtx file was not filled with stat info:
-                (totol SNPs, total samples, total records),
-                so use this function to fill and rewrite.
-             2. @p fs is not open when this function is just called and will keep not open when this function ends.
- */
 int rewrite_mtx(jfile_t *fs, size_t ns, int nsmp, size_t nr) {
 #define TMP_BUFSIZE 1048576
     kstring_t ks = KS_INITIALIZE, *s = &ks;

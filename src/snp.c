@@ -15,9 +15,6 @@
 * SNP List API
 */
 
-/*@note      The pointer returned successfully by snp_init() should be freed
-             by snp_destroy() when no longer used.
- */
 snp_t* snp_init(void) { return (snp_t*) calloc(1, sizeof(snp_t)); }
 
 void snp_destroy(snp_t *p) { 
@@ -28,9 +25,6 @@ void snp_reset(snp_t *p) {
     if (p) { free(p->chr); memset(p, 0, sizeof(snp_t)); }
 }
 
-/*@note        If length of Ref or Alt is larger than 1, then the SNP would be skipped.
-               If length of Ref or Alt is 0, then their values would be infered during pileup.
- */
 size_t get_snplist_from_vcf(const char *fn, snplist_t *pl, int *ret, int print_skip) {
     htsFile *fp = NULL;
     bcf_hdr_t *hdr = NULL;
@@ -102,3 +96,4 @@ size_t get_snplist_from_vcf(const char *fn, snplist_t *pl, int *ret, int print_s
 biallele_t* biallele_init(void) { return (biallele_t*) calloc(1, sizeof(biallele_t)); }
 void biallele_destroy(biallele_t *p) { if (p) { free(p); } }
 void biallele_reset(biallele_t *p) {}
+
