@@ -15,7 +15,7 @@ such as:
 #. Donor deconvolution in multiplexed single-cell RNA-seq data
    (e.g., with vireo_).
 #. Allele-specific CNV analysis in single-cell or spatial transcriptomics data
-   (e.g., with Numbat_ or XClone_).
+   (e.g., with Numbat_, XClone_, or CalicoST_).
 #. Clonal substructure discovery using single cell mitochondrial variants
    (e.g., with MQuad_).
 
@@ -36,6 +36,7 @@ For details of the tool, please checkout our paper:
     https://doi.org/10.1093/bioinformatics/btab358
 
 
+.. _CalicoST: https://github.com/raphael-group/CalicoST
 .. _MQuad: https://github.com/single-cell-genetics/MQuad
 .. _Numbat: https://github.com/kharchenkolab/numbat
 .. _vireo: https://github.com/huangyh09/vireo
